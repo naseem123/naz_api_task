@@ -1,0 +1,126 @@
+const catchAsync = require( "../utils/catchAsync");
+const HttpStatusCode = require("../utils/httpStatusCode");
+const Task =  require("../models/taskModel");
+const AppError = require( "../utils/appError");
+
+
+const tasks = [
+    {
+        id: 1,
+        text: "Grocery shopping",
+        day: "Feb 5th at 2:30pm",
+        reminder: true
+    },
+    {
+        id: 2,
+        text: "Clean bathroom",
+        day: "Feb 5th at 2:30pm",
+        reminder: true
+    },
+    {
+        id: 3,
+        text: "Cook dinner",
+        day: "Feb 5th at 2:30pm",
+        reminder: false
+    },
+    {
+        id: 4,
+        text: "Take out trash",
+        day: "Feb 5th at 2:30pm",
+        reminder: false
+    },
+    {
+        id: 5,
+        text: "Clean room",
+        day: "Feb 5th at 2:30pm",
+        reminder: true
+    },
+    {
+        id: 6,
+        text: "Clean room",
+        day: "Feb 5th at 2:30pm",
+        reminder: true
+    }   
+];
+
+const getAllTasks = catchAsync(async (req, res, next) => {
+    const query = Task.find({});
+    const results = await query.select('-__v');
+
+    res.status(HttpStatusCode.OK).json({
+        status: "success",
+        results: tasks.length,
+        data: {
+            tasks : results
+        }
+    })
+});
+
+
+const getTaskDetails = catchAsync(async (req, res, next) => {
+    
+    const id = req.params.id;
+    console.log(id)
+    const query = Task.findById(id);
+    const result = await query.select('-__v').catch(next(AppError("Task not found with that ID", HttpStatusCode.NOT_FOUND)));
+    res.status(HttpStatusCode.OK).json({
+        status: "success",
+        results: 1,
+        data: {
+            task : result
+        }
+    })
+});
+
+const createTask = catchAsync(async (req, res,  next) => {
+
+    const body = req.body;
+    const newTask = await Task.create({
+        text: body.text,
+        day: body.day,
+        reminder: body.reminder
+    });
+
+    res.status(HttpStatusCode.CREATED).json({
+        status: "success",
+        results: tasks.length,
+        data: {
+            task: newTask
+        }
+    })
+   
+});
+
+
+const patchTask = catchAsync(async (req, res, next) => {
+
+
+    const id = req.params.id;
+    const task =  await Task.findByIdAndUpdate(id, req.body, {
+        new: true,
+    });
+
+    res.status(HttpStatusCode.CREATED).json({
+        status: "success",
+        results: tasks.length,
+        data: {
+            task
+        }
+    })
+    
+});
+
+
+const deleteTask = catchAsync(async (req, res, next) => {
+
+    const id = req.params.id;
+    await Task.findByIdAndDelete(id,);
+   
+    res.status(HttpStatusCode.NO_CONTENT).json({
+        status: "success",
+        data: null
+    })
+   
+});
+
+module.exports = {getAllTasks, getTaskDetails, createTask, patchTask, deleteTask};
