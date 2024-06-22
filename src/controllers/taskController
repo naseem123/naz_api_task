@@ -3,53 +3,24 @@ const HttpStatusCode = require("../utils/httpStatusCode");
 const Task =  require("../models/taskModel");
 const AppError = require( "../utils/appError");
 
-
-const tasks = [
-    {
-        id: 1,
-        text: "Grocery shopping",
-        day: "Feb 5th at 2:30pm",
-        reminder: true
-    },
-    {
-        id: 2,
-        text: "Clean bathroom",
-        day: "Feb 5th at 2:30pm",
-        reminder: true
-    },
-    {
-        id: 3,
-        text: "Cook dinner",
-        day: "Feb 5th at 2:30pm",
-        reminder: false
-    },
-    {
-        id: 4,
-        text: "Take out trash",
-        day: "Feb 5th at 2:30pm",
-        reminder: false
-    },
-    {
-        id: 5,
-        text: "Clean room",
-        day: "Feb 5th at 2:30pm",
-        reminder: true
-    },
-    {
-        id: 6,
-        text: "Clean room",
-        day: "Feb 5th at 2:30pm",
-        reminder: true
-    }   
-];
-
 const getAllTasks = catchAsync(async (req, res, next) => {
-    const query = Task.find({});
+
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 5;
+
+    const skip =(page-1) * limit;
+    
+    const query = Task.find({}).skip(skip).limit(limit);
     const results = await query.select('-__v');
+    const total = await Task.countDocuments();
+    const totalPages = Math.ceil(total / limit);
+    const currentPage = page;
 
     res.status(HttpStatusCode.OK).json({
         status: "success",
-        results: tasks.length,
+        total: total,
+        totalPages: totalPages,
+        currentPage: currentPage,
         data: {
             tasks : results
         }
@@ -83,7 +54,6 @@ const createTask = catchAsync(async (req, res,  next) => {
 
     res.status(HttpStatusCode.CREATED).json({
         status: "success",
-        results: tasks.length,
         data: {
             task: newTask
         }
@@ -102,7 +72,6 @@ const patchTask = catchAsync(async (req, res, next) => {
 
     res.status(HttpStatusCode.CREATED).json({
         status: "success",
-        results: tasks.length,
         data: {
             task
         }
